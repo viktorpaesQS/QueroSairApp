@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutGrid, Car, QrCode, User, Bell, MessageSquare } from 'lucide-react';
 
-import { Toaster } from '@/components/ui/toaster';
+import Toaster from '@/components/ui/toaster';           // ⬅️ default import
 import { useToast } from '@/components/ui/use-toast';
 
 // Screens vivem diretamente em src/
@@ -155,7 +155,10 @@ export default function App() {
     <>
       <Helmet>
         <title>QUERO SAIR - Comunicação Urbana Inteligente</title>
-        <meta name="description" content="Use QR codes para evitar transtornos no trânsito. Comunique-se de forma anónima e receba notificações inteligentes sobre o seu veículo." />
+        <meta
+          name="description"
+          content="Use QR codes para evitar transtornos no trânsito. Comunique-se de forma anónima e receba notificações inteligentes sobre o seu veículo."
+        />
         <meta property="og:title" content="QUERO SAIR - Comunicação Urbana Inteligente" />
         <meta property="og:description" content="A solução moderna para problemas de estacionamento." />
       </Helmet>
@@ -171,7 +174,11 @@ export default function App() {
           ) : (
             <motion.div key="app" className="pb-20 md:pb-0">
               <div className="p-4 sm:p-6 lg:p-8">{renderContent()}</div>
-              <MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} unreadCount={unreadNotifications} />
+              <MobileBottomNav
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                unreadCount={unreadNotifications}
+              />
             </motion.div>
           )}
         </AnimatePresence>
