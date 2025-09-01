@@ -2,17 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-/* tokens + resets base (shadcn) + tua paleta */
+/* === TOKENS + BASE (já com tua paleta) === */
 @layer base {
   :root {
-    /* HSL tokens usados pelo shadcn/ui */
+    /* shadcn tokens (HSL) */
     --background: 224 71.4% 4.1%;
     --foreground: 210 20% 98%;
     --card: 224 71.4% 4.1%;
     --card-foreground: 210 20% 98%;
     --popover: 224 71.4% 4.1%;
     --popover-foreground: 210 20% 98%;
-    --primary: 48 100% 50%;             /* Amarelo vibrante */
+    --primary: 48 100% 50%;             /* amarelo vibrante */
     --primary-foreground: 224 71.4% 4.1%;
     --secondary: 215 27.9% 16.9%;
     --secondary-foreground: 210 20% 98%;
@@ -27,7 +27,7 @@
     --ring: 48 100% 50%;
     --radius: 0.75rem;
 
-    /* Paleta custom da app */
+    /* paleta custom da app */
     --brand-yellow: #FFC700;
     --brand-black: #121212;
     --dark-gray: #1A1A1A;
@@ -37,24 +37,34 @@
     --text-secondary: #A0A0A0;
   }
 
-  /* aplica tokens globais */
+  /* reset/ajustes de base */
   * { @apply border-border; }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body { @apply bg-brand-black text-text-primary; font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
 
-  body {
-    /* podes trocar para bg-background/text-foreground se preferires 100% tokens */
-    @apply bg-brand-black text-text-primary;
-    font-family: 'Inter', sans-serif;
-  }
+  /* escala tipográfica suave */
+  h1 { @apply text-2xl sm:text-3xl font-semibold tracking-tight; }
+  h2 { @apply text-xl sm:text-2xl font-semibold tracking-tight; }
+  h3 { @apply text-lg sm:text-xl font-medium; }
+  small, .text-muted { @apply text-sm text-text-secondary; }
 }
 
-/* --- efeitos e padrões --- */
+/* === COMPONENTES GENÉRICOS === */
+@layer components {
+  /* cartões padrão + hover */
+  .card       { @apply rounded-2xl bg-dark-gray/80 border border-white/10 shadow-sm; }
+  .card-hover { @apply transition hover:shadow-lg hover:bg-dark-gray; }
+
+  /* foco acessível (use em botões/inputs custom) */
+  .focus-ring { @apply outline-none ring-2 ring-primary/40 ring-offset-2 ring-offset-black; }
+}
+
+/* === efeitos e padrões existentes (mantidos) === */
 
 /* Glow amarelo */
-.yellow-glow {
-  box-shadow: 0 0 15px 0 rgba(255, 199, 0, 0.4);
-}
+.yellow-glow { box-shadow: 0 0 15px 0 rgba(255, 199, 0, 0.4); }
 
-/* Padrão “faixas de estrada” do fundo */
+/* Padrão “faixas de estrada” */
 .road-lines-pattern {
   background-image: repeating-linear-gradient(
     45deg,
@@ -65,27 +75,24 @@
   );
 }
 
-/* Helpers baseadas nas variáveis */
-.bg-dark-gray       { background-color: var(--dark-gray); }
-.bg-medium-gray     { background-color: var(--medium-gray); }
-.bg-light-gray      { background-color: var(--light-gray); }
-.bg-brand-black     { background-color: var(--brand-black); }
-.text-text-primary  { color: var(--text-primary); }
-.text-text-secondary{ color: var(--text-secondary); }
-.text-brand-yellow  { color: var(--brand-yellow); }
-.border-light-gray  { border-color: var(--light-gray); }
-.border-brand-yellow{ border-color: var(--brand-yellow); }
+/* helpers por variáveis */
+.bg-dark-gray        { background-color: var(--dark-gray); }
+.bg-medium-gray      { background-color: var(--medium-gray); }
+.bg-light-gray       { background-color: var(--light-gray); }
+.bg-brand-black      { background-color: var(--brand-black); }
+.text-text-primary   { color: var(--text-primary); }
+.text-text-secondary { color: var(--text-secondary); }
+.text-brand-yellow   { color: var(--brand-yellow); }
+.border-light-gray   { border-color: var(--light-gray); }
+.border-brand-yellow { border-color: var(--brand-yellow); }
 
-/* Cartões e realces */
+/* cartões e realces */
 .traffic-card {
-  background:
-    linear-gradient(180deg, rgba(255,199,0,0.06) 0%, rgba(0,0,0,0) 40%),
-    var(--brand-black);
+  background: linear-gradient(180deg, rgba(255,199,0,0.06) 0%, rgba(0,0,0,0) 40%), var(--brand-black);
   border: 1px solid rgba(255,255,255,0.08);
 }
 .warning-glow {
-  box-shadow: 0 0 0 1px rgba(255,199,0,0.25),
-              0 0 18px rgba(255,199,0,0.25);
+  box-shadow: 0 0 0 1px rgba(255,199,0,0.25), 0 0 18px rgba(255,199,0,0.25);
 }
 
 /* Moldura do QR */
@@ -97,14 +104,6 @@
 }
 
 /* Chat & Notificações */
-.chat-bubble {
-  box-shadow:
-    0 2px 0 rgba(0,0,0,.35),
-    inset 0 0 0 1px rgba(0,0,0,.2);
-}
+.chat-bubble { box-shadow: 0 2px 0 rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.2); }
 .notification-pulse { animation: qs-pulse 1.5s infinite; }
-@keyframes qs-pulse {
-  0%   { opacity: .6; }
-  50%  { opacity: 1;  }
-  100% { opacity: .6; }
-}
+@keyframes qs-pulse { 0%{opacity:.6} 50%{opacity:1} 100%{opacity:.6} }
