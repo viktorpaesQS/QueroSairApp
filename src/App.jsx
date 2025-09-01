@@ -17,36 +17,51 @@ import ProfileScreen from '@/ProfileScreen';
 // Notificações vivem em src/components/notification/
 import NotificationCenter from '@/components/notification/NotificationCenter';
 
-const MobileBottomNav = ({ activeTab, setActiveTab, unreadCount }) => (
-  <motion.div
-    initial={{ y: 100 }}
-    animate={{ y: 0 }}
-    exit={{ y: 100 }}
-    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-    className="fixed bottom-0 left-0 right-0 h-20 bg-dark-gray border-t border-light-gray flex justify-around items-center z-50 md:hidden"
-  >
-    {[
-      { id: 'dashboard',     icon: LayoutGrid,    label: 'Início' },
-      { id: 'vehicles',      icon: Car,           label: 'Veículos' },
-      { id: 'qr',            icon: QrCode,        label: 'QR' },
-      { id: 'notifications', icon: Bell,          label: 'Avisos', badge: unreadCount },
-      { id: 'chat',          icon: MessageSquare, label: 'Chat' },
-      { id: 'profile',       icon: User,          label: 'Perfil' },
-    ].map(item => (
-      <button
-        key={item.id}
-        onClick={() => setActiveTab(item.id)}
-        className="relative flex flex-col items-center gap-1 text-text-secondary transition-colors hover:text-brand-yellow"
-      >
-        <item.icon className={`w-6 h-6 ${activeTab === item.id ? 'text-brand-yellow' : ''}`} />
-        {item.badge > 0 && (
-          <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-dark-gray" />
-        )}
-        <span className={`text-xs ${activeTab === item.id ? 'text-brand-yellow' : ''}`}>{item.label}</span>
-      </button>
-    ))}
-  </motion.div>
-);
+const MobileBottomNav = ({ activeTab, setActiveTab, unreadCount }) => {
+  const items = [
+    { id: 'dashboard',     icon: LayoutGrid,    label: 'Home' },
+    { id: 'vehicles',      icon: Car,           label: 'Vehicles' },
+    { id: 'qr',            icon: QrCode,        label: 'Scan' },
+    { id: 'notifications', icon: Bell,          label: 'Alerts', badge: unreadCount },
+    { id: 'chat',          icon: MessageSquare, label: 'Chat' },
+    { id: 'profile',       icon: User,          label: 'Profile' },
+  ];
+
+  return (
+    <motion.div
+      initial={{ y: 100 }}
+      animate={{ y: 0 }}
+      exit={{ y: 100 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      className="fixed bottom-0 left-0 right-0 h-20 border-t border-white/10 bg-black/60 backdrop-blur supports-[backdrop-filter]:bg-black/40 z-50 md:hidden"
+    >
+      <div className="mx-auto grid h-full max-w-sm grid-cols-6 px-2">
+        {items.map((item) => {
+          const ActiveBg = activeTab === item.id ? (
+            <span className="absolute inset-0 rounded-2xl bg-[var(--brand-yellow)]/18 ring-1 ring-[var(--brand-yellow)]/25" />
+          ) : null;
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className="relative mx-1 my-3 rounded-2xl px-2 py-1 text-xs text-text-secondary transition"
+            >
+              {ActiveBg}
+              <div className="relative flex flex-col items-center gap-1">
+                <item.icon className={`h-6 w-6 ${activeTab === item.id ? 'text-brand-yellow' : ''}`} />
+                {item.badge > 0 && (
+                  <span className="absolute -top-1 -right-1 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-black/60" />
+                )}
+                <span className={`${activeTab === item.id ? 'text-brand-yellow' : ''}`}>{item.label}</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+};
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
