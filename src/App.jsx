@@ -3,10 +3,12 @@ import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutGrid, Car, QrCode, User, Bell, MessageSquare } from 'lucide-react';
 
-import Toaster from '@/components/ui/toaster';           // ⬅️ default import
+import Toaster from '@/components/ui/toaster';
 import { useToast } from '@/components/ui/use-toast';
+import { getLocationWithAddress } from '@/lib/geo';
+import LanguagePicker from '@/components/LanguagePicker';
 
-// Screens vivem diretamente em src/
+// Screens em src/
 import AuthScreen from '@/AuthScreen';
 import Dashboard from '@/Dashboard';
 import VehicleManagement from '@/VehicleManagement';
@@ -14,7 +16,7 @@ import ChatSystem from '@/ChatSystem';
 import QRCodeGenerator from '@/QRCodeGenerator';
 import ProfileScreen from '@/ProfileScreen';
 
-// Notificações vivem em src/components/notification/
+// Notificações em src/components/notification/
 import NotificationCenter from '@/components/notification/NotificationCenter';
 
 const MobileBottomNav = ({ activeTab, setActiveTab, unreadCount }) => {
@@ -37,9 +39,10 @@ const MobileBottomNav = ({ activeTab, setActiveTab, unreadCount }) => {
     >
       <div className="mx-auto grid h-full max-w-sm grid-cols-6 px-2">
         {items.map((item) => {
-          const ActiveBg = activeTab === item.id ? (
-            <span className="absolute inset-0 rounded-2xl bg-[var(--brand-yellow)]/18 ring-1 ring-[var(--brand-yellow)]/25" />
-          ) : null;
+          const ActiveBg =
+            activeTab === item.id ? (
+              <span className="absolute inset-0 rounded-2xl bg-[var(--brand-yellow)]/18 ring-1 ring-[var(--brand-yellow)]/25" />
+            ) : null;
 
           return (
             <button
@@ -66,32 +69,48 @@ const MobileBottomNav = ({ activeTab, setActiveTab, unreadCount }) => {
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  // Veículos
   const [vehicles, setVehicles] = useState([]);
+
+  // Garagens
+  const [garages, setGarages] = useState([]);
+
+  // Último local de estacionamento (geo)
+  const [lastParking, setLastParking] = useState(null);
+
+  // Notificações / Chat
   const [notifications, setNotifications] = useState([]);
   const [chats, setChats] = useState([]);
+
   const { toast } = useToast();
 
   useEffect(() => {
     const savedUser = localStorage.getItem('queroSair_user');
     const savedVehicles = localStorage.getItem('queroSair_vehicles');
+    const savedGarages = localStorage.getItem('queroSair_garages');
     const savedNotifications = localStorage.getItem('queroSair_notifications');
     const savedChats = localStorage.getItem('queroSair_chats');
+    const savedParking = localStorage.getItem('queroSair_lastParking');
 
     if (savedUser) setCurrentUser(JSON.parse(savedUser));
     if (savedVehicles) setVehicles(JSON.parse(savedVehicles));
+    if (savedGarages) setGarages(JSON.parse(savedGarages));
     if (savedNotifications) setNotifications(JSON.parse(savedNotifications));
     if (savedChats) setChats(JSON.parse(savedChats));
+    if (savedParking) setLastParking(JSON.parse(savedParking));
   }, []);
 
-  // Simulador de novas notificações (demo)
+  // Notificações simuladas (inclui endereço salvo)
   useEffect(() => {
     if (!currentUser) return;
     const id = setInterval(() => {
       if (Math.random() > 0.7) {
+        const place = lastParking?.address ? ` em ${lastParking.address}` : '';
         const newNotification = {
           id: Date.now(),
           type: ['blocked', 'window_open', 'lights_on', 'collision'][Math.floor(Math.random() * 4)],
-          message: 'O seu veículo pode estar em risco.',
+          message: `O seu veículo pode estar em risco${place}.`,
           timestamp: new Date().toISOString(),
           read: false,
         };
@@ -104,8 +123,9 @@ export default function App() {
       }
     }, 20000);
     return () => clearInterval(id);
-  }, [currentUser, toast]);
+  }, [currentUser, toast, lastParking]);
 
+  // Auth
   const handleLogin = (userData) => {
     setCurrentUser(userData);
     localStorage.setItem('queroSair_user', JSON.stringify(userData));
@@ -119,6 +139,7 @@ export default function App() {
     toast({ title: '👋 Até logo!', description: 'Sessão terminada com segurança.' });
   };
 
+  // Veículos
   const addVehicle = (vehicleData) => {
     const newVehicle = { id: Date.now(), ...vehicleData, qrCode: `QS-${Date.now()}` };
     const updated = [...vehicles, newVehicle];
@@ -134,6 +155,47 @@ export default function App() {
     toast({ title: '🗑️ Veículo removido', description: 'Remoção concluída.' });
   };
 
+  // Garagens
+  const addGarage = (garage) => {
+    const newGarage = { id: Date.now(), ...garage };
+    const updated = [newGarage, ...garages];
+    setGarages(updated);
+    localStorage.setItem('queroSair_garages', JSON.stringify(updated));
+    toast({ title: '🏠 Garagem adicionada', description: newGarage.name || newGarage.address });
+  };
+
+  const removeGarage = (garageId) => {
+    const updated = garages.filter(g => g.id !== garageId);
+    setGarages(updated);
+    localStorage.setItem('queroSair_garages', JSON.stringify(updated));
+    toast({ title: '🗑️ Garagem removida' });
+  };
+
+  // GEO – salvar / limpar local de estacionamento
+  const handleSaveParking = async () => {
+    try {
+      const loc = await getLocationWithAddress(); // pede permissão ao usuário
+      setLastParking(loc);
+      localStorage.setItem('queroSair_lastParking', JSON.stringify(loc));
+      toast({
+        title: '📍 Local salvo',
+        description: loc.address || `${loc.lat.toFixed(5)}, ${loc.lon.toFixed(5)}`,
+      });
+    } catch (e) {
+      toast({
+        title: 'Não consegui obter sua localização',
+        description: e.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleClearParking = () => {
+    setLastParking(null);
+    localStorage.removeItem('queroSair_lastParking');
+    toast({ title: '🧹 Local de estacionamento apagado' });
+  };
+
   const markNotificationAsRead = (notificationId) => {
     const updated = notifications.map(n => (n.id === notificationId ? { ...n, read: true } : n));
     setNotifications(updated);
@@ -145,9 +207,28 @@ export default function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard vehicles={vehicles} notifications={notifications} chats={chats} setActiveTab={setActiveTab} />;
+        return (
+          <Dashboard
+            vehicles={vehicles}
+            notifications={notifications}
+            chats={chats}
+            setActiveTab={setActiveTab}
+            lastParking={lastParking}
+            onSaveParking={handleSaveParking}
+            onClearParking={handleClearParking}
+          />
+        );
       case 'vehicles':
-        return <VehicleManagement vehicles={vehicles} onAddVehicle={addVehicle} onRemoveVehicle={removeVehicle} />;
+        return (
+          <VehicleManagement
+            vehicles={vehicles}
+            onAddVehicle={addVehicle}
+            onRemoveVehicle={removeVehicle}
+            garages={garages}
+            onAddGarage={addGarage}
+            onRemoveGarage={removeGarage}
+          />
+        );
       case 'qr':
         return <QRCodeGenerator vehicles={vehicles} />;
       case 'chat':
@@ -162,7 +243,17 @@ export default function App() {
       case 'profile':
         return <ProfileScreen user={currentUser} onLogout={handleLogout} />;
       default:
-        return <Dashboard vehicles={vehicles} notifications={notifications} chats={chats} setActiveTab={setActiveTab} />;
+        return (
+          <Dashboard
+            vehicles={vehicles}
+            notifications={notifications}
+            chats={chats}
+            setActiveTab={setActiveTab}
+            lastParking={lastParking}
+            onSaveParking={handleSaveParking}
+            onClearParking={handleClearParking}
+          />
+        );
     }
   };
 
@@ -177,6 +268,11 @@ export default function App() {
         <meta property="og:title" content="QUERO SAIR - Comunicação Urbana Inteligente" />
         <meta property="og:description" content="A solução moderna para problemas de estacionamento." />
       </Helmet>
+
+      {/* seletor de idioma visível em todas as telas */}
+      <div className="fixed top-3 right-3 z-[60]">
+        <LanguagePicker />
+      </div>
 
       <Toaster />
 

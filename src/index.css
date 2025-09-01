@@ -51,13 +51,14 @@
 
 /* === COMPONENTES GENÉRICOS === */
 @layer components {
-  /* cartões padrão + hover */
-  .card       { @apply rounded-2xl bg-dark-gray/80 border border-white/10 shadow-sm; }
-  .card-hover { @apply transition hover:shadow-lg hover:bg-dark-gray; }
+  /* cartões padrão + hover (usa tailwind nativo) */
+  .card       { @apply rounded-2xl bg-zinc-900/80 border border-white/10 shadow-sm; }
+  .card-hover { @apply transition hover:shadow-lg hover:bg-zinc-900; }
 
-  /* foco acessível (use em botões/inputs custom) */
+  /* foco acessível (mantém) */
   .focus-ring { @apply outline-none ring-2 ring-primary/40 ring-offset-2 ring-offset-black; }
 }
+
 
 /* === efeitos e padrões existentes (mantidos) === */
 
@@ -107,3 +108,20 @@
 .chat-bubble { box-shadow: 0 2px 0 rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.2); }
 .notification-pulse { animation: qs-pulse 1.5s infinite; }
 @keyframes qs-pulse { 0%{opacity:.6} 50%{opacity:1} 100%{opacity:.6} }
+@layer utilities {
+  .hero-radial { position: relative; }
+  .hero-radial::before {
+    content: "";
+    position: absolute;
+    inset: -80px 0 0 0;
+    background:
+      radial-gradient(600px 200px at top center,
+        rgba(255,199,0,0.12),
+        rgba(255,199,0,0.04) 40%,
+        transparent 70%);
+    filter: blur(8px);
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+

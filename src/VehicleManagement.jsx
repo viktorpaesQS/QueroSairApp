@@ -1,387 +1,248 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Car, Plus, Trash2, QrCode, Edit, Save, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
+import React, { useMemo, useState } from "react";
+import { Car, Bike, Truck, BusFront, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import ColorPicker from "@/components/ColorPicker";
+import { brands, getModelsByBrand } from "@/data/brands";
+import { useI18n } from "@/lib/i18n";
+import { useToast } from "@/components/ui/use-toast";
 
-const VehicleManagement = ({ vehicles, onAddVehicle, onRemoveVehicle }) => {
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editingVehicle, setEditingVehicle] = useState(null);
-  const [formData, setFormData] = useState({
-    type: 'car',
-    brand: '',
-    model: '',
-    plate: '',
-    color: '',
-    year: ''
-  });
+const VEHICLE_TYPES = [
+  { value: "car", label: "Car", icon: Car },
+  { value: "moto", label: "Motorcycle", icon: Bike },
+  { value: "van", label: "Van", icon: BusFront },
+  { value: "truck", label: "Truck", icon: Truck },
+];
+
+export default function VehicleManagement({
+  vehicles = [],
+  onAddVehicle,
+  onRemoveVehicle,
+  garages = [],
+  onAddGarage,
+  onRemoveGarage,
+}) {
+  const [tab, setTab] = useState("vehicles");
+  const { t } = useI18n();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setTab("vehicles")}
+          className={`rounded-full px-3 py-1.5 text-sm ${tab === "vehicles" ? "bg-[var(--brand-yellow)]/20 ring-1 ring-[var(--brand-yellow)]/35" : "bg-white/5 text-text-secondary hover:bg-white/10"}`}
+        >
+          {t("vehicles.title")}
+        </button>
+        <button
+          onClick={() => setTab("garages")}
+          className={`rounded-full px-3 py-1.5 text-sm ${tab === "garages" ? "bg-[var(--brand-yellow)]/20 ring-1 ring-[var(--brand-yellow)]/35" : "bg-white/5 text-text-secondary hover:bg-white/10"}`}
+        >
+          {t("garages.title")}
+        </button>
+      </div>
+
+      {tab === "vehicles" ? (
+        <VehicleTab vehicles={vehicles} onAdd={onAddVehicle} onRemove={onRemoveVehicle} />
+      ) : (
+        <GarageTab garages={garages} onAdd={onAddGarage} onRemove={onRemoveGarage} />
+      )}
+    </div>
+  );
+}
+
+function VehicleTab({ vehicles, onAdd, onRemove }) {
+  const { t } = useI18n();
   const { toast } = useToast();
 
-  const vehicleTypes = [
-    { value: 'car', label: 'Carro', icon: '🚗' },
-    { value: 'motorcycle', label: 'Moto', icon: '🏍️' },
-    { value: 'truck', label: 'Caminhão', icon: '🚚' },
-    { value: 'van', label: 'Van', icon: '🚐' }
-  ];
+  const [form, setForm] = useState({
+    type: "car",
+    brand: "",
+    model: "",
+    plate: "",
+    color: "#FFC700",
+    year: new Date().getFullYear(),
+  });
 
-  const colors = [
-    'Branco', 'Preto', 'Prata', 'Cinza', 'Azul', 'Vermelho', 
-    'Verde', 'Amarelo', 'Marrom', 'Bege', 'Roxo', 'Laranja'
-  ];
+  const models = useMemo(() => getModelsByBrand(form.brand), [form.brand]);
 
-  const handleSubmit = (e) => {
+  const grouped = useMemo(() => {
+    const g = { car: [], moto: [], van: [], truck: [] };
+    vehicles.forEach(v => g[v.type || "car"].push(v));
+    return g;
+  }, [vehicles]);
+
+  const submit = (e) => {
     e.preventDefault();
-    
-    if (!formData.brand || !formData.model || !formData.plate) {
-      toast({
-        title: "⚠️ Campos obrigatórios",
-        description: "Por favor, preencha marca, modelo e placa",
-        variant: "destructive",
-        duration: 3000,
-      });
+    // obrigatórios: tipo, marca, modelo, cor
+    if (!form.type || !form.brand || !form.model || !form.color) {
+      toast({ title: t("required.all") });
       return;
     }
-
-    if (editingVehicle) {
-      // Editar veículo existente
-      toast({
-        title: "🚧 Funcionalidade em desenvolvimento",
-        description: "A edição de veículos será implementada em breve! 🚀",
-        duration: 3000,
-      });
-    } else {
-      // Adicionar novo veículo
-      onAddVehicle(formData);
-      setFormData({
-        type: 'car',
-        brand: '',
-        model: '',
-        plate: '',
-        color: '',
-        year: ''
-      });
-      setShowAddForm(false);
-    }
-  };
-
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleEdit = (vehicle) => {
-    setEditingVehicle(vehicle);
-    setFormData(vehicle);
-    setShowAddForm(true);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingVehicle(null);
-    setFormData({
-      type: 'car',
-      brand: '',
-      model: '',
-      plate: '',
-      color: '',
-      year: ''
-    });
-    setShowAddForm(false);
-  };
-
-  const getVehicleIcon = (type) => {
-    const typeData = vehicleTypes.find(t => t.value === type);
-    return typeData ? typeData.icon : '🚗';
-  };
-
-  const generateQRCode = (vehicle) => {
-    toast({
-      title: "🚧 Funcionalidade em desenvolvimento",
-      description: "A geração de QR codes será implementada em breve! 🚀",
-      duration: 3000,
-    });
+    onAdd(form);
+    setForm({ type: "car", brand: "", model: "", plate: "", color: "#FFC700", year: new Date().getFullYear() });
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="space-y-6"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-yellow-400 mb-2">Gestão de Veículos</h1>
-          <p className="text-gray-400">Cadastre e gerencie seus carros e motos</p>
-        </div>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button
-            onClick={() => setShowAddForm(true)}
-            className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold hover:from-yellow-500 hover:to-yellow-600 warning-glow"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar Veículo
-          </Button>
-        </motion.div>
-      </div>
-
-      {/* Add/Edit Vehicle Form */}
-      <AnimatePresence>
-        {showAddForm && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="traffic-card rounded-xl p-6 warning-glow"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-yellow-400">
-                {editingVehicle ? 'Editar Veículo' : 'Adicionar Novo Veículo'}
-              </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCancelEdit}
-                className="text-gray-400 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Tipo de Veículo */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Tipo de Veículo
-                  </label>
-                  <select
-                    name="type"
-                    value={formData.type}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white focus:border-yellow-400 focus:outline-none transition-colors"
-                  >
-                    {vehicleTypes.map(type => (
-                      <option key={type.value} value={type.value}>
-                        {type.icon} {type.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Marca */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Marca *
-                  </label>
-                  <input
-                    type="text"
-                    name="brand"
-                    value={formData.brand}
-                    onChange={handleInputChange}
-                    placeholder="Ex: Toyota, Honda, Ford"
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-yellow-400 focus:outline-none transition-colors"
-                  />
-                </div>
-
-                {/* Modelo */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Modelo *
-                  </label>
-                  <input
-                    type="text"
-                    name="model"
-                    value={formData.model}
-                    onChange={handleInputChange}
-                    placeholder="Ex: Corolla, Civic, Focus"
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-yellow-400 focus:outline-none transition-colors"
-                  />
-                </div>
-
-                {/* Placa */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Placa *
-                  </label>
-                  <input
-                    type="text"
-                    name="plate"
-                    value={formData.plate}
-                    onChange={handleInputChange}
-                    placeholder="Ex: ABC-1234"
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-yellow-400 focus:outline-none transition-colors"
-                  />
-                </div>
-
-                {/* Cor */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Cor
-                  </label>
-                  <select
-                    name="color"
-                    value={formData.color}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white focus:border-yellow-400 focus:outline-none transition-colors"
-                  >
-                    <option value="">Selecione a cor</option>
-                    {colors.map(color => (
-                      <option key={color} value={color}>{color}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Ano */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Ano
-                  </label>
-                  <input
-                    type="number"
-                    name="year"
-                    value={formData.year}
-                    onChange={handleInputChange}
-                    placeholder="Ex: 2020"
-                    min="1900"
-                    max={new Date().getFullYear() + 1}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-yellow-400 focus:outline-none transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div className="flex space-x-4 pt-4">
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold hover:from-yellow-500 hover:to-yellow-600 warning-glow"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    {editingVehicle ? 'Salvar Alterações' : 'Adicionar Veículo'}
-                  </Button>
-                </motion.div>
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleCancelEdit}
-                    className="border-gray-600 text-gray-300 hover:bg-gray-800"
-                  >
-                    Cancelar
-                  </Button>
-                </motion.div>
-              </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Vehicles Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <AnimatePresence>
-          {vehicles.map((vehicle, index) => (
-            <motion.div
-              key={vehicle.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ delay: index * 0.1 }}
-              className="vehicle-card traffic-card rounded-xl p-6 warning-glow"
+    <div className="grid gap-6">
+      {/* Form */}
+      <form onSubmit={submit} className="card p-4 sm:p-5 grid gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div>
+            <Label>{t("form.type")}</Label>
+            <select
+              value={form.type}
+              onChange={(e) => setForm({ ...form, type: e.target.value })}
+              className="mt-1 w-full rounded-xl bg-zinc-900 border border-white/10 px-3 py-2 text-sm"
+              required
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="text-3xl">{getVehicleIcon(vehicle.type)}</div>
-                  <div>
-                    <h3 className="font-semibold text-white">
-                      {vehicle.brand} {vehicle.model}
-                    </h3>
-                    <p className="text-sm text-gray-400">{vehicle.plate}</p>
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => handleEdit(vehicle)}
-                    className="p-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => onRemoveVehicle(vehicle.id)}
-                    className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </motion.button>
-                </div>
-              </div>
-
-              <div className="space-y-2 mb-4">
-                {vehicle.color && (
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs text-gray-400">Cor:</span>
-                    <span className="text-sm text-gray-300">{vehicle.color}</span>
-                  </div>
-                )}
-                {vehicle.year && (
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs text-gray-400">Ano:</span>
-                    <span className="text-sm text-gray-300">{vehicle.year}</span>
-                  </div>
-                )}
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs text-gray-400">QR Code:</span>
-                  <span className="text-sm text-yellow-400 font-mono">{vehicle.qrCode}</span>
-                </div>
-              </div>
-
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button
-                  onClick={() => generateQRCode(vehicle)}
-                  className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700"
-                >
-                  <QrCode className="w-4 h-4 mr-2" />
-                  Gerar QR Code
-                </Button>
-              </motion.div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-
-      {/* Empty State */}
-      {vehicles.length === 0 && !showAddForm && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-16"
-        >
-          <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Car className="w-12 h-12 text-gray-600" />
+              {VEHICLE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
           </div>
-          <h3 className="text-xl font-semibold text-gray-400 mb-2">
-            Nenhum veículo cadastrado
-          </h3>
-          <p className="text-gray-500 mb-6">
-            Adicione seu primeiro veículo para começar a usar o QUERO SAIR
-          </p>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              onClick={() => setShowAddForm(true)}
-              className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold hover:from-yellow-500 hover:to-yellow-600 warning-glow"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar Primeiro Veículo
-            </Button>
-          </motion.div>
-        </motion.div>
-      )}
-    </motion.div>
-  );
-};
 
-export default VehicleManagement;
+          <div>
+            <Label>{t("form.brand")}</Label>
+            <select
+              value={form.brand}
+              onChange={(e) => setForm({ ...form, brand: e.target.value, model: "" })}
+              className="mt-1 w-full rounded-xl bg-zinc-900 border border-white/10 px-3 py-2 text-sm"
+              required
+            >
+              <option value="" disabled>—</option>
+              {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <Label>{t("form.model")}</Label>
+            <select
+              value={form.model}
+              onChange={(e) => setForm({ ...form, model: e.target.value })}
+              disabled={!form.brand}
+              className="mt-1 w-full rounded-xl bg-zinc-900 border border-white/10 px-3 py-2 text-sm disabled:opacity-50"
+              required
+            >
+              <option value="" disabled>—</option>
+              {models.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <Label>{t("form.plate")}</Label>
+            <Input value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value.toUpperCase() })} placeholder="ABC-1234" />
+          </div>
+
+          <div>
+            <Label>{t("form.color")}</Label>
+            <ColorPicker valueHex={form.color} onChange={({ hex }) => setForm({ ...form, color: hex })} />
+          </div>
+
+          <div>
+            <Label>{t("form.year")}</Label>
+            <Input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: Number(e.target.value) })} />
+          </div>
+        </div>
+
+        <div>
+          <Button type="submit">{t("form.addVehicle")}</Button>
+        </div>
+      </form>
+
+      {/* Lists por tipo */}
+      {Object.entries(grouped).map(([type, list]) => (
+        <section key={type} className="grid gap-3">
+          <h3 className="text-sm uppercase text-text-secondary">{type}</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {list.length === 0 ? (
+              <div className="text-sm text-text-secondary">—</div>
+            ) : (
+              list.map(v => <VehicleCard key={v.id} v={v} onRemove={() => onRemove(v.id)} />)
+            )}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function VehicleCard({ v, onRemove }) {
+  const Icon = (v.type === "moto" ? Bike : v.type === "truck" ? Truck : v.type === "van" ? BusFront : Car);
+
+  return (
+    <div className="relative card p-4">
+      <span className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-yellow-400/70 via-yellow-400/20 to-transparent" />
+      <div className="flex items-center gap-3">
+        <div
+          className="grid h-12 w-12 place-items-center rounded-xl ring-1"
+          style={{ background: `${v.color}22`, color: v.color, borderColor: `${v.color}44` }}
+        >
+          <Icon className="h-6 w-6" />
+          <VehicleSilhouette type={v.type} color={v.color} className="h-6 w-6" />
+        </div>
+        <div className="min-w-0">
+          <div className="font-medium truncate">{v.brand || "—"} {v.model || ""}</div>
+          <div className="text-xs text-text-secondary">{v.plate || "—"} • {v.year || "—"}</div>
+        </div>
+        <button onClick={onRemove} className="ml-auto rounded-lg p-2 text-zinc-400 hover:text-white hover:bg-white/5">
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function GarageTab({ garages, onAdd, onRemove }) {
+  const { t } = useI18n();
+  const [g, setG] = useState({ name: "", address: "", notes: "" });
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (!g.name && !g.address) return;
+    onAdd(g);
+    setG({ name: "", address: "", notes: "" });
+  };
+
+  return (
+    <div className="grid gap-6">
+      <form onSubmit={submit} className="card p-4 sm:p-5 grid gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <Label>{t("garage.name")}</Label>
+            <Input value={g.name} onChange={(e) => setG({ ...g, name: e.target.value })} placeholder="Ex.: Garagem Casa" />
+          </div>
+          <div>
+            <Label>{t("garage.address")}</Label>
+            <Input value={g.address} onChange={(e) => setG({ ...g, address: e.target.value })} placeholder="Rua, nº, bairro" />
+          </div>
+        </div>
+        <div>
+          <Label>{t("garage.notes")}</Label>
+          <Input value={g.notes} onChange={(e) => setG({ ...g, notes: e.target.value })} placeholder="Ex.: portão azul, vaga 12…" />
+        </div>
+        <div>
+          <Button type="submit">{t("form.addGarage")}</Button>
+        </div>
+      </form>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {garages.length === 0 ? (
+          <div className="text-sm text-text-secondary">—</div>
+        ) : (
+          garages.map((x) => (
+            <div key={x.id} className="card p-4 flex items-center gap-3">
+              <div className="min-w-0">
+                <div className="font-medium truncate">{x.name || "—"}</div>
+                <div className="text-xs text-text-secondary truncate">{x.address || "—"}</div>
+                {x.notes ? <div className="text-xs text-text-secondary truncate">{x.notes}</div> : null}
+              </div>
+              <button onClick={() => onRemove(x.id)} className="ml-auto rounded-lg p-2 text-zinc-400 hover:text-white hover:bg-white/5">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
