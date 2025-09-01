@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* tokens + resets base (shadcn) + tua paleta */
+@layer base {
+  :root {
+    /* HSL tokens usados pelo shadcn/ui */
+    --background: 224 71.4% 4.1%;
+    --foreground: 210 20% 98%;
+    --card: 224 71.4% 4.1%;
+    --card-foreground: 210 20% 98%;
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 48 100% 50%;             /* Amarelo vibrante */
+    --primary-foreground: 224 71.4% 4.1%;
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 48 100% 50%;
+    --radius: 0.75rem;
+
+    /* Paleta custom da app */
+    --brand-yellow: #FFC700;
+    --brand-black: #121212;
+    --dark-gray: #1A1A1A;
+    --medium-gray: #2A2A2A;
+    --light-gray: #3C3C3C;
+    --text-primary: #FFFFFF;
+    --text-secondary: #A0A0A0;
+  }
+
+  /* aplica tokens globais */
+  * { @apply border-border; }
+
+  body {
+    /* podes trocar para bg-background/text-foreground se preferires 100% tokens */
+    @apply bg-brand-black text-text-primary;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+/* --- efeitos e padrões --- */
+
+/* Glow amarelo */
+.yellow-glow {
+  box-shadow: 0 0 15px 0 rgba(255, 199, 0, 0.4);
+}
+
+/* Padrão “faixas de estrada” do fundo */
+.road-lines-pattern {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 199, 0, 0.05),
+    rgba(255, 199, 0, 0.05) 1px,
+    transparent 1px,
+    transparent 20px
+  );
+}
+
+/* Helpers baseadas nas variáveis */
+.bg-dark-gray       { background-color: var(--dark-gray); }
+.bg-medium-gray     { background-color: var(--medium-gray); }
+.bg-light-gray      { background-color: var(--light-gray); }
+.bg-brand-black     { background-color: var(--brand-black); }
+.text-text-primary  { color: var(--text-primary); }
+.text-text-secondary{ color: var(--text-secondary); }
+.text-brand-yellow  { color: var(--brand-yellow); }
+.border-light-gray  { border-color: var(--light-gray); }
+.border-brand-yellow{ border-color: var(--brand-yellow); }
+
+/* Cartões e realces */
+.traffic-card {
+  background:
+    linear-gradient(180deg, rgba(255,199,0,0.06) 0%, rgba(0,0,0,0) 40%),
+    var(--brand-black);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.warning-glow {
+  box-shadow: 0 0 0 1px rgba(255,199,0,0.25),
+              0 0 18px rgba(255,199,0,0.25);
+}
+
+/* Moldura do QR */
+.qr-code-pattern {
+  background-image:
+    radial-gradient(circle at 25% 25%, rgba(0,0,0,0.06) 0 2px, transparent 3px),
+    radial-gradient(circle at 75% 75%, rgba(0,0,0,0.06) 0 2px, transparent 3px);
+  background-size: 16px 16px;
+}
+
+/* Chat & Notificações */
+.chat-bubble {
+  box-shadow:
+    0 2px 0 rgba(0,0,0,.35),
+    inset 0 0 0 1px rgba(0,0,0,.2);
+}
+.notification-pulse { animation: qs-pulse 1.5s infinite; }
+@keyframes qs-pulse {
+  0%   { opacity: .6; }
+  50%  { opacity: 1;  }
+  100% { opacity: .6; }
+}
